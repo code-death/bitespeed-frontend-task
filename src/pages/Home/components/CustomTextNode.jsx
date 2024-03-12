@@ -12,7 +12,6 @@ const CustomTextNode = ({data, isConnectable, isConnectableStart, validateConn, 
                 position={Position.Left}
             />
             <Handle
-                isConnectableStart={isConnectableStart}
                 key="a2"
                 isConnectable={isConnectable}
                 isValidConnection={validateConn}

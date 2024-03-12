@@ -4,9 +4,10 @@ import ReactFlow, {
     applyEdgeChanges,
     applyNodeChanges,
     Background,
-    Controls, MarkerType, useEdgesState,
-    useNodeId,
-    useNodesState
+    Controls,
+    MarkerType,
+    updateEdge,
+    getConnectedEdges,
 } from 'reactflow';
 import 'reactflow/dist/style.css';
 import SideMenu from "../../components/UI/SideMenu.jsx";
@@ -27,14 +28,17 @@ const initialNodes = [
 ];
 const initialEdges = [];
 
+const savedNodes = JSON.parse(window.localStorage.getItem('savedNodes'));
+
+const savedEdges = JSON.parse(window.localStorage.getItem('savedEdges'));
+
 const nodeTypes = {textUpdater: CustomTextNode}
 
 const Home = ({...props}) => {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [nodes, setNodes] = useState(savedNodes ? savedNodes : initialNodes);
+    const [edges, setEdges] = useState(savedEdges ? savedEdges : initialEdges);
     const [pointerLocation, setPointerLocation] = useState({x: 0, y: 0});
     const [selectedNode, setSelectedNode] = useState({});
-
 
     useEffect(() => {
         window.addEventListener('mousemove', (e) => setPointerLocation({x: e.clientX, y: e.clientY}))
@@ -44,23 +48,33 @@ const Home = ({...props}) => {
         }
     }, []);
 
-    // const onNodesChange = useCallback(
-    //     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
-    //     [setNodes]
-    // );
-    // const onEdgesChange = useCallback(
-    //     (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
-    //     [setEdges]
-    // );
+    const onNodesChange = useCallback(
+        (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+        [setNodes]
+    );
+    const onEdgesChange = useCallback(
+        (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+        [setEdges]
+    );
     const onConnect = useCallback(
         (connection) => {
-            const newEdge = {
-                ...connection,
-                markerEnd: {
-                    type: MarkerType.Arrow,
-                },
-            };
-            setEdges((eds) => addEdge(newEdge, eds));
+            if(connection.source !== connection.target) {
+                const newEdge = {
+                    ...connection,
+                    markerEnd: {
+                        type: MarkerType.Arrow,
+                    },
+                };
+
+                setEdges((edges) => {
+                    let edgeExists = [...edges].filter(edge => edge.source === connection.source)?.[0];
+                    if(_.isEmpty(edgeExists)) {
+                        return addEdge(newEdge, edges)
+                    } else {
+                        return updateEdge(edgeExists, newEdge, edges)
+                    }
+                });
+            }
         },
         [setEdges]
     );
@@ -131,19 +145,39 @@ const Home = ({...props}) => {
         changeNodes(newNode, text)
     }
 
-    const validateConnections = () => {
+    const validateConnectionsForSaving = () => {
         let isValid = true;
-        let message = "No connections"
+        let message = "No connections";
+
         if(_.isEmpty(edges)) {
-            return false
+            isValid = false;
+            message = "No connections"
+        } else {
+            let connectedEdges = getConnectedEdges(nodes, edges);
+            let nodesWithAtLeastOneConnection = [];
+            connectedEdges.forEach(edge => {
+                if (!nodesWithAtLeastOneConnection.includes(edge.source)) {
+                    nodesWithAtLeastOneConnection.push(edge.source)
+                }
+                if (!nodesWithAtLeastOneConnection.includes(edge.target)) {
+                    nodesWithAtLeastOneConnection.push(edge.target)
+                }
+            })
+
+            if(nodesWithAtLeastOneConnection.length < nodes.length - 1) {
+                isValid = false;
+                message = "Not all nodes connected"
+            }
         }
 
         return {isValid, error: message}
     }
 
     const handleSave = () => {
-        let {isValid, error} = validateConnections();
+        let {isValid, error} = validateConnectionsForSaving();
         if(isValid) {
+            window.localStorage.setItem('savedNodes', JSON.stringify(nodes))
+            window.localStorage.setItem('savedEdges', JSON.stringify(edges))
             toast('Saved Data !', {
                 style: getToastStyles('success')
             })
