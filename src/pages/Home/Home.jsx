@@ -1,28 +1,15 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import ReactFlow, {
-    addEdge,
-    applyEdgeChanges,
-    applyNodeChanges,
-    Background,
-    Controls,
-    MarkerType,
-    updateEdge,
-    getConnectedEdges,
-} from 'reactflow';
+import {addEdge, applyEdgeChanges, applyNodeChanges, getConnectedEdges, MarkerType, updateEdge,} from 'reactflow';
 import 'reactflow/dist/style.css';
-import SideMenu from "../../components/UI/SideMenu.jsx";
-import NodeButton from "../../components/Buttons/NodeButton.jsx";
 import './css/Home.css'
 import CustomTextNode from "./components/CustomTextNode.jsx";
-import {DragDropContext, Draggable, Droppable} from "react-beautiful-dnd";
-import CustomTextNodeDummy from "./components/CustomTextNodeDummy.jsx";
 import _ from "lodash";
-import NodeEditor from "./components/NodeEditor.jsx";
 import Navbar from "../../components/UI/Navbar.jsx";
 import toast from "react-hot-toast";
 import {getToastStyles} from "../../utils/toastUtils.js";
 import FlowComponent from "./components/FlowComponent.jsx";
-import Tabs from "../../components/UI/Tabs/Tabs.jsx";
+import {useDispatch, useSelector} from "react-redux";
+import {setSheetData} from "../../redux/store.js";
 
 const initialNodes = [
     { id: '1', type: "textUpdater", position: { x: 50, y: 50 }, data: { message: 'Message number 1', isSelected: false }, },
@@ -30,17 +17,27 @@ const initialNodes = [
 ];
 const initialEdges = [];
 
-const savedNodes = JSON.parse(window.localStorage.getItem('savedNodes'));
-
-const savedEdges = JSON.parse(window.localStorage.getItem('savedEdges'));
-
 const nodeTypes = {textUpdater: CustomTextNode}
 
-const Home = ({...props}) => {
-    const [nodes, setNodes] = useState(savedNodes ? savedNodes : initialNodes);
-    const [edges, setEdges] = useState(savedEdges ? savedEdges : initialEdges);
+const Home = ({localData, activeTabId, ...props}) => {
+    const [nodes, setNodes] = useState(localData?.savedNodes ? localData?.savedNodes : []);
+    const [edges, setEdges] = useState(localData?.savedEdges ? localData?.savedEdges : []);
     const [pointerLocation, setPointerLocation] = useState({x: 0, y: 0});
     const [selectedNode, setSelectedNode] = useState({});
+
+    const tabs = useSelector(state => state.tabs)
+
+    const dispatch = useDispatch();
+
+    useEffect(() => {
+        if(!_.isEmpty(localData)) {
+            setNodes(prevNodes => localData.savedNodes.map(nd => nd))
+            setEdges(prevEdges => localData.savedEdges.map(ed => ed))
+        } else {
+            setNodes(prevNodes => []);
+            setEdges(prevEdges => []);
+        }
+    }, [localData]);
 
     useEffect(() => {
         window.addEventListener('mousemove', (e) => setPointerLocation({x: e.clientX, y: e.clientY}))
@@ -185,8 +182,20 @@ const Home = ({...props}) => {
     const handleSave = () => {
         let {isValid, error} = validateConnectionsForSaving();
         if(isValid) {
-            window.localStorage.setItem('savedNodes', JSON.stringify(nodes))
-            window.localStorage.setItem('savedEdges', JSON.stringify(edges))
+            let localData = JSON.parse(window.localStorage.getItem('sheetData'));
+            if(_.isEmpty(localData)) {
+                localData = {};
+            }
+            let payload = {};
+            payload.tabId = activeTabId;
+            payload.data = {
+                savedNodes: nodes,
+                savedEdges: edges
+            }
+            localData[activeTabId] = payload.data;
+            dispatch(setSheetData(payload));
+            window.localStorage.setItem('sheetData', JSON.stringify(localData));
+            window.localStorage.setItem('tabs', JSON.stringify(tabs));
             toast('Saved Data !', {
                 style: getToastStyles('success')
             })
