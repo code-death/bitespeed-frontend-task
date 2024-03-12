@@ -155,6 +155,7 @@ const Home = ({...props}) => {
         } else {
             let connectedEdges = getConnectedEdges(nodes, edges);
             let nodesWithAtLeastOneConnection = [];
+            let nodeWithZeroConnections = [];
             connectedEdges.forEach(edge => {
                 if (!nodesWithAtLeastOneConnection.includes(edge.source)) {
                     nodesWithAtLeastOneConnection.push(edge.source)
@@ -164,7 +165,13 @@ const Home = ({...props}) => {
                 }
             })
 
-            if(nodesWithAtLeastOneConnection.length < nodes.length - 1) {
+            nodes.forEach(node => {
+                if(!nodesWithAtLeastOneConnection.includes(node.id)) {
+                    nodeWithZeroConnections.push(node.id)
+                }
+            })
+
+            if(nodeWithZeroConnections.length > 0) {
                 isValid = false;
                 message = "Not all nodes connected"
             }
