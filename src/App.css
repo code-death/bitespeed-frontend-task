@@ -1,42 +1,94 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  color: black;
+}
+
+.navbar {
+  z-index: 100;
+  top: 0;
+  background-color: var(--navbar_background);
+  min-height: 4vh;
+  padding: 1vh 4vw;
+  width: 92vw;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.home {
+  display: flex;
+  width: 100vw;
+  height: 92vh;
+}
+
+.flow-drawer {
+  width: 73%;
+  height: 94vh;
+}
+
+.custom-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  outline: none;
+  border: 1px solid var(--primary_button_color);
+  background-color: white;
+  color: black;
+  cursor: pointer;
+  transition: 200ms ease-out;
+}
+
+.custom-button:hover, .node-button:hover {
+  box-shadow: 2px 2px 0px var(--primary_button_color);
+  transform: scale(1.01);
+}
+
+.side-menu {
+  position: absolute;
+  width: 25%;
+  padding: 3vh 1vw;
+  height: 88vh;
+}
+
+.side-menu-left {
+  left: 0;
+  border-right: 1px solid #cdcdcd;
+}
+
+.side-menu-right {
+  right: 0;
+  border-left: 1px solid #cdcdcd;
+}
+
+.node-button {
+  cursor: pointer;
+  color: var(--primary_button_color);
   text-align: center;
+  font-weight: 400;
+  font-size: 1rem;
+  border: 1px solid var(--primary_button_color);
+  padding: 8px;
+  width: 200px;
+  border-radius: 4px;
+  align-items: center;
+  transition: 200ms ease-out;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.dead-button {
+  background: none;
+  border: none;
+  font-weight: inherit;
+  font-size: inherit;
+  color: inherit;
+  margin-top: 8px;
+  cursor: inherit;
+  pointer-events: inherit;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+.node-button-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+  margin: auto;
 }
