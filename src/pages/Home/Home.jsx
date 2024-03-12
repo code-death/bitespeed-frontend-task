@@ -1,5 +1,13 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {addEdge, applyEdgeChanges, applyNodeChanges, getConnectedEdges, MarkerType, updateEdge,} from 'reactflow';
+import {
+    addEdge,
+    applyEdgeChanges,
+    applyNodeChanges,
+    getConnectedEdges,
+    MarkerType,
+    updateEdge, useEdgesState,
+    useNodesState
+} from 'reactflow';
 import 'reactflow/dist/style.css';
 import './css/Home.css'
 import CustomTextNode from "./components/CustomTextNode.jsx";
@@ -30,12 +38,27 @@ const Home = ({localData, activeTabId, ...props}) => {
     const dispatch = useDispatch();
 
     useEffect(() => {
+        if(!_.isEmpty(nodes) || !_.isEmpty(edges)) {
+            let payload = {};
+            payload.tabId = activeTabId;
+            payload.data = {
+                savedNodes: nodes,
+                savedEdges: edges
+            }
+            dispatch(setSheetData(payload))
+        }
+    }, [nodes, edges, setNodes, setEdges]);
+
+
+    useEffect(() => {
         if(!_.isEmpty(localData)) {
             setNodes(prevNodes => localData.savedNodes.map(nd => nd))
             setEdges(prevEdges => localData.savedEdges.map(ed => ed))
+            setSelectedNode({});
         } else {
             setNodes(prevNodes => []);
             setEdges(prevEdges => []);
+            setSelectedNode({});
         }
     }, [localData]);
 
@@ -48,13 +71,19 @@ const Home = ({localData, activeTabId, ...props}) => {
     }, []);
 
     const onNodesChange = useCallback(
-        (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+        (changes) => {
+            setNodes((nds) => applyNodeChanges(changes, nds));
+        },
         [setNodes]
     );
+
     const onEdgesChange = useCallback(
-        (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+        (changes) => {
+            setEdges((eds) => applyEdgeChanges(changes, eds));
+        },
         [setEdges]
     );
+
     const onConnect = useCallback(
         (connection) => {
             if(connection.source !== connection.target) {
@@ -80,26 +109,32 @@ const Home = ({localData, activeTabId, ...props}) => {
 
     const onSelectionChange = useCallback(
         (selection) => {
-            if(!_.isEmpty(selection.nodes)) {
-                const newSelection = selection?.nodes[0];
+            if (!_.isEmpty(selection.nodes)) {
+                const newSelection = selection.nodes[0];
                 setSelectedNode(newSelection);
-                setNodes((nds) => nds.map(node => {
-                    if(node?.id === newSelection?.id) {
-                        node.selected = true;
-                        node.data = {
-                            ...node.data,
-                            isSelected: true
+                setNodes((nds) =>
+                    nds.map((node) => {
+                        if (node.id === newSelection.id) {
+                            return {
+                                ...node,
+                                selected: true,
+                                data: {
+                                    ...node.data,
+                                    isSelected: true,
+                                },
+                            };
+                        } else {
+                            return {
+                                ...node,
+                                selected: false,
+                                data: {
+                                    ...node.data,
+                                    isSelected: false,
+                                },
+                            };
                         }
-                    } else {
-                        node.selected = false;
-                        node.data = {
-                            ...node.data,
-                            isSelected: false
-                        }
-                    }
-
-                    return node;
-                }));
+                    })
+                );
             }
         },
         [setSelectedNode, setNodes]
@@ -118,18 +153,21 @@ const Home = ({localData, activeTabId, ...props}) => {
     }
 
     const changeNodes = (newNode, message) => {
-        const tempNode = {...newNode}
-        setNodes((nds) => nds.map(node => {
-            if(node.id === tempNode.id) {
-                node.data = {
-                    ...node.data,
-                    message: message,
-                };
-            }
-
-            return node
-        }));
-    }
+        setNodes((nds) =>
+            nds.map((node) => {
+                if (node.id === newNode.id) {
+                    return {
+                        ...node,
+                        data: {
+                            ...node.data,
+                            message: message,
+                        },
+                    };
+                }
+                return node;
+            })
+        );
+    };
 
     const onDragEnd = (change) => {
         if(change?.destination?.droppableId === 'droppable-1') {
@@ -138,11 +176,17 @@ const Home = ({localData, activeTabId, ...props}) => {
     }
 
     const handleTextChange = (text) => {
-        let newNode = {...selectedNode};
-        newNode.data.message = text;
-        setSelectedNode(newNode);
-        changeNodes(newNode, text)
-    }
+        const updatedNode = {
+            ...selectedNode,
+            data: {
+                ...selectedNode.data,
+                message: text,
+            },
+        };
+        setSelectedNode(updatedNode);
+        changeNodes(updatedNode, text);
+    };
+
 
     const validateConnectionsForSaving = () => {
         let isValid = true;
