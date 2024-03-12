@@ -1,0 +1,59 @@
+.tabs-container {
+    width: 96%;
+    position: absolute;
+    padding: 1vh 2vw;
+    display: flex;
+    align-items: center;
+    /*border-top: 1px solid #cdcdcd;*/
+    height: 3vh;
+    background-color: var(--navbar_background);
+}
+
+.tabs-container-top {
+    top: 0;
+}
+
+.tabs-container-bottom {
+    bottom: 0;
+}
+
+.add-icon-container {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.add-icon {
+    width: 16px;
+    height: 16px;
+    opacity: 0.5;
+}
+
+.single-tab {
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6c6c6c;
+    border-right: 1px solid #cdcdcd;
+    padding: 2px 16px;
+    display: flex;
+    height: 100%;
+    align-items: center;
+}
+
+.active-tab {
+    color: #0bab82;
+}
+
+.tab-text {
+    margin: 4px 0 0 0;
+}
+
+.tab-input {
+    background-color: white;
+    color: black;
+    outline: 1px solid var(--primary_chat_color);
+    border: none;
+    padding: 4px;
+    width: 50px;
+    border-radius: 4px;
+}

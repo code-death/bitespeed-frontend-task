@@ -21,6 +21,8 @@ import NodeEditor from "./components/NodeEditor.jsx";
 import Navbar from "../../components/UI/Navbar.jsx";
 import toast from "react-hot-toast";
 import {getToastStyles} from "../../utils/toastUtils.js";
+import FlowComponent from "./components/FlowComponent.jsx";
+import Tabs from "../../components/UI/Tabs/Tabs.jsx";
 
 const initialNodes = [
     { id: '1', type: "textUpdater", position: { x: 50, y: 50 }, data: { message: 'Message number 1', isSelected: false }, },
@@ -155,6 +157,7 @@ const Home = ({...props}) => {
         } else {
             let connectedEdges = getConnectedEdges(nodes, edges);
             let nodesWithAtLeastOneConnection = [];
+            let nodeWithZeroConnections = [];
             connectedEdges.forEach(edge => {
                 if (!nodesWithAtLeastOneConnection.includes(edge.source)) {
                     nodesWithAtLeastOneConnection.push(edge.source)
@@ -164,7 +167,13 @@ const Home = ({...props}) => {
                 }
             })
 
-            if(nodesWithAtLeastOneConnection.length < nodes.length - 1) {
+            nodes.forEach(node => {
+                if(!nodesWithAtLeastOneConnection.includes(node.id)) {
+                    nodeWithZeroConnections.push(node.id)
+                }
+            })
+
+            if(nodeWithZeroConnections.length > 0) {
                 isValid = false;
                 message = "Not all nodes connected"
             }
@@ -197,70 +206,20 @@ const Home = ({...props}) => {
     return (
             <>
                 <Navbar onSave={handleSave} />
-                <DragDropContext
+                <FlowComponent
                     onDragEnd={onDragEnd}
-                >
-                    <div className={'home'}>
-                        <Droppable droppableId="droppable-1" type="PERSON">
-                            {
-                                (provided, snapshot) => {
-
-                                    return (
-                                        <div ref={provided.innerRef} className={'flow-drawer'}>
-                                            <ReactFlow
-                                                elementsSelectable={true}
-                                                onSelectionChange={onSelectionChange}
-                                                nodes={nodes}
-                                                edges={edges}
-                                                onNodesChange={onNodesChange}
-                                                onEdgesChange={onEdgesChange}
-                                                onConnect={onConnect}
-                                                nodeTypes={nodeTypes}
-                                            >
-                                                <Controls />
-                                                {/*<MiniMap />*/}
-                                                <Background variant="dots" gap={12} size={1} />
-                                            </ReactFlow>
-                                            {provided.placeholder}
-                                        </div>
-                                    )
-                                }
-                            }
-                        </Droppable>
-                        {
-                            _.isEmpty(selectedNode) ? (
-                                <Droppable droppableId={"droppable-2"} type={"PERSON"}>
-                                    {
-                                        (provided, snapshot) => (
-                                            <div ref={provided.innerRef}>
-                                                <SideMenu position={'right'}>
-                                                    <Draggable draggableId="draggable-1" index={0}>
-                                                        {
-                                                            (provided, snapshot) => (
-                                                                <div
-                                                                    ref={provided.innerRef}
-                                                                    {...provided.draggableProps}
-                                                                    {...provided.dragHandleProps}
-                                                                >
-                                                                    {snapshot.isDragging ? <CustomTextNodeDummy data={{message: "Drop me !"}} /> : <NodeButton onClick={addNodes} style={{width: '45%'}} text={'Message'} />}
-                                                                </div>
-                                                            )
-                                                        }
-                                                    </Draggable>
-                                                </SideMenu>
-                                                {provided.placeholder}
-                                            </div>
-                                        )
-                                    }
-                                </Droppable>
-                            ) : (
-                                <SideMenu style={{padding:0, width: "27%", height: "94vh"}} position={'right'}>
-                                    {selectedNode && <NodeEditor handleBack={handleBack} onChange={handleTextChange} type={'Message'} data={selectedNode.data}/>}
-                                </SideMenu>
-                            )
-                        }
-                    </div>
-                </DragDropContext>
+                    onSelectionChange={onSelectionChange}
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={onConnect}
+                    nodeTypes={nodeTypes}
+                    selectedNode={selectedNode}
+                    addNodes={addNodes}
+                    handleBack={handleBack}
+                    handleTextChange={handleTextChange}
+                />
             </>
     )
 }

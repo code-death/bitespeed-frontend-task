@@ -20,12 +20,13 @@ body {
 .home {
   display: flex;
   width: 100vw;
-  height: 92vh;
+  height: 89vh;
 }
 
 .flow-drawer {
+  overflow: hidden;
   width: 73%;
-  height: 94vh;
+  height: 100%;
 }
 
 .custom-button {
@@ -48,7 +49,7 @@ body {
   position: absolute;
   width: 25%;
   padding: 3vh 1vw;
-  height: 88vh;
+  height: 84%;
 }
 
 .side-menu-left {
