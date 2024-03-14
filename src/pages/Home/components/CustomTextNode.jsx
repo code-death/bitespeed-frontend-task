@@ -1,8 +1,8 @@
 import {Handle, Position} from "reactflow";
 
-const CustomTextNode = ({data, isConnectable, isConnectableStart, validateConn, ...props}) => {
+const CustomTextNode = ({data, isConnectable, selected, isConnectableStart, validateConn, ...props}) => {
     return(
-        <div className={`custom-node ${data?.isSelected ? 'selected-node' : ''}`}>
+        <div className={`custom-node ${selected ? 'selected-node' : ''}`}>
             <Handle
                 key="a1"
                 isConnectable={isConnectable}

@@ -18,49 +18,56 @@ import {getToastStyles} from "../../utils/toastUtils.js";
 import FlowComponent from "./components/FlowComponent.jsx";
 import {useDispatch, useSelector} from "react-redux";
 import {setSheetData} from "../../redux/store.js";
+import {validateConnectionsForTabs} from "../../utils/validations.js";
 
 const initialNodes = [
-    { id: '1', type: "textUpdater", position: { x: 50, y: 50 }, data: { message: 'Message number 1', isSelected: false }, },
-    { id: '2', type: "textUpdater", position: { x: 350, y: 150 }, data: { message: 'Message number 2', isSelected: false },  },
+    { id: '1', type: "textUpdater", position: { x: 50, y: 50 }, data: { message: 'Message number 1'}, },
+    { id: '2', type: "textUpdater", position: { x: 350, y: 150 }, data: { message: 'Message number 2'},  },
 ];
 const initialEdges = [];
 
 const nodeTypes = {textUpdater: CustomTextNode}
 
 const Home = ({localData, activeTabId, ...props}) => {
-    const [nodes, setNodes] = useState(localData?.savedNodes ? localData?.savedNodes : []);
-    const [edges, setEdges] = useState(localData?.savedEdges ? localData?.savedEdges : []);
+    const [nodes, setNodes] = useState([]);
+    const [edges, setEdges] = useState([]);
     const [pointerLocation, setPointerLocation] = useState({x: 0, y: 0});
     const [selectedNode, setSelectedNode] = useState({});
 
-    const tabs = useSelector(state => state.tabs)
+    const tabs = useSelector(state => state.tabs);
+    const sheetData = useSelector(state => state.allData);
 
     const dispatch = useDispatch();
 
     useEffect(() => {
-        if(!_.isEmpty(nodes) || !_.isEmpty(edges)) {
-            let payload = {};
-            payload.tabId = activeTabId;
-            payload.data = {
-                savedNodes: nodes,
-                savedEdges: edges
+        let tabData = sheetData?.[activeTabId];
+        if(!_.isEqual(tabData?.savedNodes, nodes) || !_.isEqual(tabData?.savedEdges, edges)) {
+            if(!_.isEmpty(nodes) || !_.isEmpty(edges)) {
+                let payload = {};
+                payload.tabId = activeTabId;
+                payload.data = {
+                    savedNodes: nodes,
+                    savedEdges: edges
+                }
+                dispatch(setSheetData(payload))
             }
-            dispatch(setSheetData(payload))
         }
-    }, [nodes, edges, setNodes, setEdges]);
+    }, [nodes, edges]);
 
 
     useEffect(() => {
-        if(!_.isEmpty(localData)) {
-            setNodes(prevNodes => localData.savedNodes.map(nd => nd))
-            setEdges(prevEdges => localData.savedEdges.map(ed => ed))
-            setSelectedNode({});
-        } else {
-            setNodes(prevNodes => []);
-            setEdges(prevEdges => []);
-            setSelectedNode({});
-        }
-    }, [localData]);
+            let tabData = sheetData?.[activeTabId];
+            let selectedNode = tabData?.savedNodes.filter(node => node.selected)?.[0];
+            if(!_.isEmpty(tabData) && !_.isEmpty(tabData.savedNodes) && !_.isEmpty(tabData.savedEdges)) {
+                setNodes(prevNodes => tabData.savedNodes.map(nd => nd))
+                setEdges(prevEdges => tabData.savedEdges.map(ed => ed))
+            }
+            if(!_.isEmpty(selectedNode)) {
+                setSelectedNode(selectedNode);
+            } else {
+                setSelectedNode({})
+            }
+    }, [sheetData, activeTabId]);
 
     useEffect(() => {
         window.addEventListener('mousemove', (e) => setPointerLocation({x: e.clientX, y: e.clientY}))
@@ -118,19 +125,11 @@ const Home = ({localData, activeTabId, ...props}) => {
                             return {
                                 ...node,
                                 selected: true,
-                                data: {
-                                    ...node.data,
-                                    isSelected: true,
-                                },
                             };
                         } else {
                             return {
                                 ...node,
                                 selected: false,
-                                data: {
-                                    ...node.data,
-                                    isSelected: false,
-                                },
                             };
                         }
                     })
@@ -188,67 +187,38 @@ const Home = ({localData, activeTabId, ...props}) => {
     };
 
 
-    const validateConnectionsForSaving = () => {
-        let isValid = true;
-        let message = "No connections";
 
-        if(_.isEmpty(edges)) {
-            isValid = false;
-            message = "No connections"
-        } else {
-            let connectedEdges = getConnectedEdges(nodes, edges);
-            let nodesWithAtLeastOneConnection = [];
-            let nodeWithZeroConnections = [];
-            connectedEdges.forEach(edge => {
-                if (!nodesWithAtLeastOneConnection.includes(edge.source)) {
-                    nodesWithAtLeastOneConnection.push(edge.source)
-                }
-                if (!nodesWithAtLeastOneConnection.includes(edge.target)) {
-                    nodesWithAtLeastOneConnection.push(edge.target)
-                }
-            })
-
-            nodes.forEach(node => {
-                if(!nodesWithAtLeastOneConnection.includes(node.id)) {
-                    nodeWithZeroConnections.push(node.id)
-                }
-            })
-
-            if(nodeWithZeroConnections.length > 0) {
-                isValid = false;
-                message = "Not all nodes connected"
-            }
-        }
-
-        return {isValid, error: message}
-    }
 
     const handleSave = () => {
-        let {isValid, error} = validateConnectionsForSaving();
-        if(isValid) {
-            let localData = JSON.parse(window.localStorage.getItem('sheetData'));
-            if(_.isEmpty(localData)) {
-                localData = {};
-            }
-            let payload = {};
-            payload.tabId = activeTabId;
-            payload.data = {
-                savedNodes: nodes,
-                savedEdges: edges
-            }
+        const tabValidations = validateConnectionsForTabs(sheetData, tabs);
+
+        const allTabsValid = tabValidations.every(validation => validation.isValid);
+
+        if (allTabsValid) {
+            const localData = JSON.parse(window.localStorage.getItem('sheetData')) || {};
+            const payload = {
+                tabId: activeTabId,
+                data: {
+                    savedNodes: nodes,
+                    savedEdges: edges
+                }
+            };
             localData[activeTabId] = payload.data;
             dispatch(setSheetData(payload));
             window.localStorage.setItem('sheetData', JSON.stringify(localData));
             window.localStorage.setItem('tabs', JSON.stringify(tabs));
             toast('Saved Data !', {
                 style: getToastStyles('success')
-            })
+            });
         } else {
-            toast(error ? error : "Cannot Save", {
+            const invalidTabMessages = tabValidations.filter(validation => !validation.isValid)
+                .map(validation => validation.message)
+                .join('\n');
+            toast(invalidTabMessages || 'Cannot Save', {
                 style: getToastStyles('error')
-            })
+            });
         }
-    }
+    };
 
     const handleBack = () => {
         setSelectedNode({});
