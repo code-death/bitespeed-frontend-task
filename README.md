@@ -47,5 +47,5 @@ There might be minor bugs or issues in the extra features
 
 ## Live Websites
 
-- [Live Website with extra features](https://bitespeed-frontend-task-git-extra-features-code-death.vercel.app/)
-- [Live website with base features](https://bitespeed-frontend-task-xcst.vercel.app/)
+- [Live Website with extra features](https://bitespeed-frontend-task-extra.vercel.app/)
+- [Live website with base features](https://bitespeed-frontend-task-two.vercel.app/)
