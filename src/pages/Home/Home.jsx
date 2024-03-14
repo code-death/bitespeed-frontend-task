@@ -192,7 +192,7 @@ const Home = ({localData, activeTabId, ...props}) => {
     const handleSave = () => {
         const tabValidations = validateConnectionsForTabs(sheetData, tabs);
 
-        const allTabsValid = tabValidations.every(validation => validation.isValid);
+        const allTabsValid = tabValidations?.every(validation => validation.isValid);
 
         if (allTabsValid) {
             const localData = JSON.parse(window.localStorage.getItem('sheetData')) || {};
