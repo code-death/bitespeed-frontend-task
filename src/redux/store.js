@@ -1,4 +1,6 @@
 import {createSlice, configureStore} from '@reduxjs/toolkit'
+import toast from "react-hot-toast";
+import {getToastStyles} from "../utils/toastUtils.js";
 
 const roomSlice = createSlice({
     name: 'biteSpeed',
@@ -41,15 +43,21 @@ const roomSlice = createSlice({
             }
         },
         addNewTab: (state) => {
-            let newTab = {};
-            const tabLength = state.tabs.length + 1;
-            newTab.id = tabLength;
-            newTab.key = tabLength.toString();
-            newTab.label = `Tab${tabLength.toString()}`
+            if(state.tabs?.length < 8) {
+                let newTab = {};
+                const tabLength = state.tabs.length + 1;
+                newTab.id = tabLength;
+                newTab.key = tabLength.toString();
+                newTab.label = `Tab${tabLength.toString()}`
 
-            return {
-                ...state,
-                tabs: [...state.tabs, newTab]
+                return {
+                    ...state,
+                    tabs: [...state.tabs, newTab]
+                }
+            } else {
+                toast("Max 8 tabs allowed", {
+                    style: getToastStyles('error')
+                });
             }
         },
         tabNameChange: (state, action) => {
