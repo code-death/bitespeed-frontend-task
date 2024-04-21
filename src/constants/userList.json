@@ -1,0 +1,18 @@
+[
+  {
+    "userName": "New Hire",
+    "role": "user"
+  },
+  {
+    "userName": "Lead",
+    "role": "team-lead"
+  },
+  {
+    "userName": "Admin",
+    "role": "admin"
+  },
+  {
+    "userName": "Ops",
+    "role": "ops"
+  }
+]
